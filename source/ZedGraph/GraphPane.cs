@@ -367,16 +367,43 @@ namespace ZedGraph
 			get { return _zoomStack; }
 		}
 
-	#endregion
+        #endregion
 
-	#region Constructors
+        #region Constructors
 
-		/// <summary>
-		/// Default Constructor.  Sets the <see cref="PaneBase.Rect"/> to (0, 0, 500, 375), and
-		/// sets the <see cref="PaneBase.Title"/> and <see cref="Axis.Title"/> values to empty
-		/// strings.
-		/// </summary>
-		public GraphPane()
+        // GR init with size
+        public GraphPane(int width, int height)
+            : this(new RectangleF(0, 0, width, height), "", "", "")
+        {
+        }
+        // GR - PNG default
+        public void SavePng(string path)
+        {
+            Bitmap bmp = new Bitmap((int)this.Rect.Width, (int)this.Rect.Height, PixelFormat.Format32bppArgb);
+            Graphics g = Graphics.FromImage(bmp);
+            this.Draw(g);
+            bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        // GR - PNG default
+        public byte[] SaveBytes(string path)
+        {
+            Bitmap bmp = new Bitmap((int)this.Rect.Width, (int)this.Rect.Height, PixelFormat.Format32bppArgb);
+            Graphics g = Graphics.FromImage(bmp);
+            this.Draw(g);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                bmp.Save(ms, ImageFormat.Png);
+                return ms.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Default Constructor.  Sets the <see cref="PaneBase.Rect"/> to (0, 0, 500, 375), and
+        /// sets the <see cref="PaneBase.Title"/> and <see cref="Axis.Title"/> values to empty
+        /// strings.
+        /// </summary>
+        public GraphPane()
 			: this( new RectangleF( 0, 0, 500, 375 ), "", "", "" )
 		{
 		}
