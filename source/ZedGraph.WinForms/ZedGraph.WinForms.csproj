@@ -32,13 +32,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net47|AnyCPU'">
     <DocumentationFile>bin\Release\net47\ZedGraph.WinForms.xml</DocumentationFile>
   </PropertyGroup>
-
   <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
+    <EmbeddedResource Remove="ZedGraphLocale.de.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.hu.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.ja.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.pt.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.ru.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.sk.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.sv.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.tr.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.tw.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.zh-cn.resx" />
+    <EmbeddedResource Remove="ZedGraphLocale.zh-tw.resx" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="3.6.5" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
   <ItemGroup>
