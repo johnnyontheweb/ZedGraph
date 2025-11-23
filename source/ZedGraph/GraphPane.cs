@@ -386,7 +386,7 @@ namespace ZedGraph
         }
 
         // GR - PNG default
-        public byte[] SaveBytes(string path)
+        public byte[] SaveBytes()
         {
             Bitmap bmp = new Bitmap((int)this.Rect.Width, (int)this.Rect.Height, PixelFormat.Format32bppArgb);
             Graphics g = Graphics.FromImage(bmp);
