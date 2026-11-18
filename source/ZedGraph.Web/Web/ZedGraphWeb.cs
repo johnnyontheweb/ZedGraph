@@ -980,7 +980,8 @@ namespace ZedGraph.Web
 				RenderModeType retVal = RenderModeType.ImageTag;
 				try
 				{
-					retVal = (RenderModeType)RenderModeType.Parse( typeof( RenderModeType ), ViewState["RenderMode"].ToString() );
+					if (ViewState["RenderMode"] != null)
+						retVal = (RenderModeType)RenderModeType.Parse( typeof( RenderModeType ), ViewState["RenderMode"].ToString() );
 				}
 				catch ( System.Exception )
 				{
@@ -1010,6 +1011,21 @@ namespace ZedGraph.Web
 				return ( x == null ) ? "~/ZedGraphImages/" : x;
 			}
 			set { ViewState["RenderedImagePath"] = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the base filename for a generated image, without suffix or extension.
+		/// An empty value uses an automatically generated filename.
+		/// </summary>
+		[Category("Behavior"), DefaultValue(""), Description("Name of the image file")]
+		public string FileImagePath
+		{
+			get
+			{
+				string x = ViewState["FileImagePath"] as string;
+				return (x == null) ? "" : x;
+			}
+			set { ViewState["FileImagePath"] = value; }
 		}
 
 		/// <summary>
@@ -1516,7 +1532,10 @@ namespace ZedGraph.Web
 					}
 					else
 					{
-						tempFileName = this.ClientID + System.Guid.NewGuid().ToString() +
+						string tempName = this.ClientID + System.Guid.NewGuid().ToString();
+						if (this.FileImagePath != "")
+							tempName = this.FileImagePath;
+						tempFileName = tempName +
 							( this.CacheSuffix != null && this.CacheSuffix.Length > 0 ? this.CacheSuffix : "" ) +
 							"." + this.ImageFormatFileExtension;
 						tempFilePathName = Context.Server.MapPath( this.RenderedImagePath );
