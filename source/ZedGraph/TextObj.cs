@@ -42,6 +42,40 @@ namespace ZedGraph
 		/// to access this value.
 		/// </summary>
 		private string _text;
+
+        private bool _isFontScaledToAxis;
+
+        /// <summary>
+        /// When true, FontSpec.Size is a height in Y-axis units rather than a
+        /// fixed screen size. Applies to AxisXYScale and AxisXY2Scale positions.
+        /// The font follows axis zoom and pane resizing. Default is false.
+        /// </summary>
+        public bool IsFontScaledToAxis
+        {
+            get { return _isFontScaledToAxis; }
+            set { _isFontScaledToAxis = value; }
+        }
+
+        // Shared by rendering and hit testing; do not change FontSpec.Size.
+        private float GetTextScaleFactor(PaneBase pane, float scaleFactor)
+        {
+            if (!_isFontScaledToAxis || !(pane is GraphPane) ||
+                (_location.CoordinateFrame != CoordType.AxisXYScale &&
+                 _location.CoordinateFrame != CoordType.AxisXY2Scale))
+                return scaleFactor;
+
+            GraphPane graph = (GraphPane)pane;
+            Scale axis = _location.CoordinateFrame == CoordType.AxisXY2Scale
+                ? graph.Y2Axis.Scale : graph.YAxis.Scale;
+            double height = _fontSpec.Size;
+            if (height <= 0 || double.IsNaN(height) || double.IsInfinity(height))
+                return scaleFactor;
+            double pixels = Math.Abs(axis.Transform(_location.Y + height) - axis.Transform(_location.Y));
+            double factor = pixels / height;
+            if (factor <= 0 || double.IsNaN(factor) || double.IsInfinity(factor) || factor > float.MaxValue)
+                return scaleFactor;
+            return (float)factor;
+        }
 		/// <summary>
 		/// Private field to store the <see cref="FontSpec"/> class used to render
 		/// this <see cref="TextObj"/>.  Use the public property <see cref="FontSpec"/>
@@ -283,6 +317,7 @@ namespace ZedGraph
 		public TextObj( TextObj rhs ) : base( rhs )
 		{
 			_text = rhs.Text;
+            _isFontScaledToAxis = rhs._isFontScaledToAxis;
 			_fontSpec = new FontSpec( rhs.FontSpec );
 		}
 
@@ -310,7 +345,7 @@ namespace ZedGraph
 		/// <summary>
 		/// Current schema value that defines the version of the serialized file
 		/// </summary>
-		public const int schema2 = 10;
+		public const int schema2 = 11;
 
 		/// <summary>
 		/// Constructor for deserializing objects
@@ -326,6 +361,7 @@ namespace ZedGraph
 			int sch = info.GetInt32( "schema2" );
 
 			_text = info.GetString( "text" );
+            _isFontScaledToAxis = sch >= 11 && info.GetBoolean("isFontScaledToAxis");
 			_fontSpec = (FontSpec) info.GetValue( "fontSpec", typeof(FontSpec) );
 			//isWrapped = info.GetBoolean ("isWrapped") ;
 			_layoutArea = (SizeF) info.GetValue( "layoutArea", typeof(SizeF) );
@@ -341,6 +377,7 @@ namespace ZedGraph
 			base.GetObjectData( info, context );
 			info.AddValue( "schema2", schema2 );
 			info.AddValue( "text", _text );
+            info.AddValue("isFontScaledToAxis", _isFontScaledToAxis);
 			info.AddValue( "fontSpec", _fontSpec );
 			//info.AddValue( "isWrapped", isWrapped );
 			info.AddValue( "layoutArea", _layoutArea );
@@ -369,6 +406,7 @@ namespace ZedGraph
 		/// </param>
 		override public void Draw( Graphics g, PaneBase pane, float scaleFactor )
 		{
+            scaleFactor = GetTextScaleFactor(pane, scaleFactor);
 			// transform the x,y location from the user-defined
 			// coordinate frame to the screen pixel location
 			PointF pix = _location.Transform( pane );
@@ -410,6 +448,7 @@ namespace ZedGraph
 		/// <returns>true if the point lies in the bounding box, false otherwise</returns>
 		override public bool PointInBox( PointF pt, PaneBase pane, Graphics g, float scaleFactor )
 		{
+            scaleFactor = GetTextScaleFactor(pane, scaleFactor);
 			if ( ! base.PointInBox(pt, pane, g, scaleFactor ) )
 				return false;
 
@@ -427,6 +466,7 @@ namespace ZedGraph
 		override public void GetCoords( PaneBase pane, Graphics g, float scaleFactor,
 				out string shape, out string coords )
 		{
+            scaleFactor = GetTextScaleFactor(pane, scaleFactor);
 			// transform the x,y location from the user-defined
 			// coordinate frame to the screen pixel location
 			PointF pix = _location.Transform( pane );
