@@ -18,6 +18,7 @@
 //=============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.Serialization;
@@ -569,8 +570,8 @@ namespace ZedGraph
 			int minY = (int)pane.Chart.Rect.Top;
 			int maxY = (int)pane.Chart.Rect.Bottom;
 
-			// (Dale-a-b) we'll set an element to true when it has been drawn	
-			bool[,] isPixelDrawn = new bool[maxX + 1, maxY + 1];
+			// Usa un HashSet di coordinate pixel al posto di un array 2D
+			HashSet<(int, int)> drawnPixels = new HashSet<(int, int)>();
 
 			double curX, curY, lowVal;
 			IPointList points = curve.Points;
@@ -639,20 +640,18 @@ namespace ZedGraph
 									( !yIsLog || curY > 0.0 ) &&
 									( xIsOrdinal || ( curX >= xMin && curX <= xMax ) ) )
 							{
-								// Transform the user scale values to pixel locations
 								tmpX = (int) xScale.Transform( curve.IsOverrideOrdinal, i, curX );
 								tmpY = (int) yScale.Transform( curve.IsOverrideOrdinal, i, curY );
 
-								// Maintain an array of "used" pixel locations to avoid duplicate drawing operations
-								if ( tmpX >= minX && tmpX <= maxX && tmpY >= minY && tmpY <= maxY ) // guard against the zoom-in case
+								// Verifica e deduplicazione con HashSet
+								if ( tmpX >= minX && tmpX <= maxX && tmpY >= minY && tmpY <= maxY )
 								{
-									if ( isPixelDrawn[tmpX, tmpY] )
+									var pixelKey = (tmpX, tmpY);
+									if ( drawnPixels.Contains( pixelKey ) )
 										continue;
-									isPixelDrawn[tmpX, tmpY] = true;
+									drawnPixels.Add( pixelKey );
 								}
 
-								// If the fill type for this symbol is a Gradient by value type,
-								// the make a brush corresponding to the appropriate current value
 								if ( _fill.IsGradientValueType || _border._gradientFill.IsGradientValueType )
 								{
 									using ( Brush tBrush = _fill.MakeBrush( rect, points[i] ) )

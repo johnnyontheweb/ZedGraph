@@ -154,8 +154,8 @@ namespace ZedGraph
 		/// <param name="rhs">The <see cref="PolyObj"/> object from which to copy</param>
 		public PolyObj( PolyObj rhs ) : base( rhs )
 		{
-			rhs._points = (PointD[]) _points.Clone();
-			rhs._isClosedFigure = _isClosedFigure;
+			_points = (PointD[]) rhs._points.Clone();
+			_isClosedFigure = rhs._isClosedFigure;
 		}
 
 		/// <summary>

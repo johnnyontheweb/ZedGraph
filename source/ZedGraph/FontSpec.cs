@@ -699,6 +699,8 @@ namespace ZedGraph
 							 ( _isUnderline ? FontStyle.Underline : style );
 
 				scaledSize = size * (float)scaleFactor;
+				if (scaledSize <= 0 || float.IsNaN(scaledSize) || float.IsInfinity(scaledSize))
+					scaledSize = 12;
 				font = new Font( _family, scaledSize, style, GraphicsUnit.World );
 			}
 		}

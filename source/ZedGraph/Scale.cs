@@ -1884,6 +1884,7 @@ namespace ZedGraph
 		/// </returns>
 		virtual internal double CalcMajorTicValue( double baseVal, double tic )
 		{
+			if (double.IsNaN(_majorStep)) return 0;
 			// Default behavior is a normal linear scale (also works for ordinal types)
 			return baseVal + (double) _majorStep * tic;
 		}
@@ -1951,6 +1952,7 @@ namespace ZedGraph
 			}
 			else
 			{
+				if (double.IsNaN(_majorStep) || _majorStep == 0) return 0;
 				// default behavior is linear or ordinal type
 				// go to the nearest even multiple of the step size
 				return Math.Ceiling( (double)_min / (double)_majorStep - 0.00000001 )
@@ -2544,13 +2546,13 @@ namespace ZedGraph
 			if (this._magAuto)
 			{
 				// Find the optimal scale display multiple
-				double minMag = Math.Floor(Math.Log10(Math.Abs(this._min)));
-				double maxMag = Math.Floor(Math.Log10(Math.Abs(this._max)));
+				double minMag = Math.Abs(_min) > 1.0e-30 ? Math.Floor(Math.Log10(Math.Abs(_min))) : -100;
+				double maxMag = Math.Abs(_max) > 1.0e-30 ? Math.Floor(Math.Log10(Math.Abs(_max))) : -100;
 
 				double mag = Math.Max(maxMag, minMag);
 
 				// Do not use scale multiples for magnitudes below 4
-				if (Math.Abs(mag) <= 3)
+				if (mag == -100 || Math.Abs(mag) <= 3)
 				{
 					mag = 0;
 				}

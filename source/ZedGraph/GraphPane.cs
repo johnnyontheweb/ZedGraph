@@ -141,6 +141,27 @@ namespace ZedGraph
 		/// <seealso cref="Default.LineType"/>
 		private LineType _lineType;
 
+    /// <summary>
+    /// Stores whether the aspect ratio drawing shall be used or not. True means
+    /// draw with a probably set aspect ratio, false means ignore it.
+    /// <see cref="GraphPane.IsAspectRatio"/>
+    /// </summary>
+    private bool _isAspectRatio;
+
+    /// <summary>
+    /// Stores an aspect ratio ZedGraph can uses to draw graphs.
+    /// <see cref="GraphPane.AspectRatio"/>
+    /// </summary>
+    private float _aspectRatio;
+
+    /// <summary>
+    /// Specifies the alignment of the chart rectangle relative to the graph rectangle.
+    /// This makes sense only if a aspect ratio is active.
+    /// </summary>
+    private ContentAlignment _chartAlign;
+
+
+
 	#endregion
 
 	#region Defaults
@@ -191,6 +212,25 @@ namespace ZedGraph
 			/// candidate.
 			/// </summary>
 			public static double NearestTol = 7.0;
+      /// <summary>
+      /// Switch off or on graphics drawing with a certain aspect ratio.
+      /// <see cref="GraphPane.IsAspectRatio"/>
+      /// </summary>
+      public static bool IsAspectRatio = false;
+      /// <summary>
+      /// Set the default aspect ratio to a harmless value.
+      /// One as an aspect ration will change nothing because
+      /// 1 is the neutral element so the aspect ration calculation
+      /// will always return the identity.
+      /// <see cref="GraphPane.AspectRatio"/>
+      /// </summary>
+      public static float AspectRatio = 1f;
+      /// <summary>
+      /// Set the Chart alignment to Top-Left as a starting point.
+      /// This works only with an valid aspect ratio set and with
+      /// aspect ratio drawing active.
+      /// </summary>
+      public static ContentAlignment ChartAlign = ContentAlignment.TopLeft;
 
 		}
 	#endregion
@@ -212,6 +252,7 @@ namespace ZedGraph
 		public XAxis XAxis
 		{
 			get { return _xAxis; }
+			set { _xAxis = value; }
 		}
 		/// <summary>
 		/// Accesses the <see cref="X2Axis"/> for this graph
@@ -220,6 +261,7 @@ namespace ZedGraph
 		public X2Axis X2Axis
 		{
 			get { return _x2Axis; }
+			set { _x2Axis = value; }
 		}
 		/// <summary>
 		/// Accesses the primary <see cref="YAxis"/> for this graph
@@ -367,6 +409,85 @@ namespace ZedGraph
 			get { return _zoomStack; }
 		}
 
+    /// <summary>
+    /// Gets or sets an aspect ratio. This means you can force ZedGraph
+    /// to draw a graphics with a defined side ratio (e.g.: width by hight.)
+    ///
+    /// Setting the aspect ration to zero is switching of the aspect ratio drawing
+    /// and the aspect ratio itself is set to its default value of 1.0.
+    ///
+    /// To switch that behavior on and off use <see cref="GraphPane.IsAspectRatio" />.
+    ///
+    /// A non-positive or non-finite aspect ratio isn't valid because that will cause a
+    /// devision by zero error (e.g.: width/0 = error). However, it is
+    /// senseless anyway because that would mean one dimension is zero so
+    /// there is no plane anymore.
+    ///
+    /// The aspect ratio of a two-dimensional shape is the ratio of its
+    /// longer dimension to its shorter dimension. A very famous ratio in
+    /// that context is the golden ratio.  Two quantities are in the golden
+    /// ratio if the ratio between the sum of those quantities and the larger
+    /// one is the same as the ratio between the larger one and the smaller.
+    /// The golden ratio is approximately 1.6180339887.
+    /// </summary>
+    /// <value>The aspect ratio.</value>
+    public float AspectRatio
+    {
+      get { return _aspectRatio; }
+      set
+      {
+        // zero isn't a valid value. Because of rounding errors
+        // we test for a small region around zero. This implementation
+        // is switching of aspect ratio drawing if the user sets the
+        // aspect ration to zero. Negative and non-finite ratios are invalid as well.
+        if ( value <= 0.001f || float.IsNaN(value) || float.IsInfinity(value) )
+        {
+          _aspectRatio = Default.AspectRatio;
+          _isAspectRatio = false;
+        }
+        else
+        {
+          _aspectRatio = value;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Enables or disables drawing considering a certain aspect ratio.
+    /// True means draw with a probably set <see cref="GraphPane.AspectRatio" />,
+    /// false means ignore the <see cref="GraphPane.AspectRatio" />.
+    ///
+    /// Consider you can only switch on this feature if the aspect ratio is
+    /// not null. Setting the <see cref="GraphPane.AspectRatio" /> to zero
+    /// disables the whole thing because that value isn't operable at all.
+    /// </summary>
+    /// <value>The is aspect ratio.</value>
+    public bool IsAspectRatio
+    {
+      get { return _isAspectRatio; }
+      set
+      {
+        // Do not allow a zero aspect ratio. The ratio must be positive and finite.
+        // In other words: Value must *NOT* be zero.
+        if ( _aspectRatio > 0.001f && !float.IsNaN(_aspectRatio) && !float.IsInfinity(_aspectRatio) )
+          _isAspectRatio = value;
+        else
+          _isAspectRatio = false;
+      }
+    }
+
+    /// <summary>
+    /// Specifies the alignment of the chart inside the graph pane.
+    /// This makes sense only if a aspect ratio is active.
+    /// </summary>
+    /// <value>The chart align.</value>
+    public System.Drawing.ContentAlignment ChartAlign
+    {
+      get { return _chartAlign; }
+      set { _chartAlign = value; }
+    }
+
+
         #endregion
 
         #region Constructors
@@ -440,6 +561,10 @@ namespace ZedGraph
 			_isBoundedRanges = Default.IsBoundedRanges;
 			_isAlignGrids = false;
 
+			_isAspectRatio = Default.IsAspectRatio;
+			_aspectRatio = Default.AspectRatio;
+			_chartAlign = Default.ChartAlign;
+
 			_chart = new Chart();
 
 			_barSettings = new BarSettings( this );
@@ -458,6 +583,9 @@ namespace ZedGraph
 			_isIgnoreInitial = rhs.IsIgnoreInitial;
 			_isBoundedRanges = rhs._isBoundedRanges;
 			_isAlignGrids = rhs._isAlignGrids;
+			_isAspectRatio = rhs.IsAspectRatio;
+			_aspectRatio = rhs.AspectRatio;
+			_chartAlign = rhs.ChartAlign;
 
 			_chart = rhs._chart.Clone();
 
@@ -508,7 +636,8 @@ namespace ZedGraph
 		//changed to 3 when chart object was added
 		//changed to 10 when refactored to version 5
 		//changed to 11 when added x2axis
-		public const int schema2 = 11;
+		//changed to 12 when aspect ratio settings were added
+		public const int schema2 = 12;
 
 		/// <summary>
 		/// Constructor for deserializing objects
@@ -547,6 +676,16 @@ namespace ZedGraph
 
 			_lineType = (LineType)info.GetValue( "lineType", typeof( LineType ) );
 
+			_aspectRatio = Default.AspectRatio;
+			_chartAlign = Default.ChartAlign;
+			_isAspectRatio = Default.IsAspectRatio;
+			if (sch >= 12)
+			{
+				AspectRatio = info.GetSingle("aspectRatio");
+				ChartAlign = (ContentAlignment)info.GetValue("chartAlign", typeof(ContentAlignment));
+				IsAspectRatio = info.GetBoolean("isAspectRatio");
+			}
+
 			_zoomStack = new ZoomStateStack();
 		}
 		/// <summary>
@@ -577,6 +716,9 @@ namespace ZedGraph
 			info.AddValue( "isAlignGrids", _isAlignGrids );
 
 			info.AddValue( "lineType", _lineType );
+			info.AddValue("aspectRatio", _aspectRatio);
+			info.AddValue("isAspectRatio", _isAspectRatio);
+			info.AddValue("chartAlign", _chartAlign);
 		}
 
 	#endregion
@@ -1028,10 +1170,89 @@ namespace ZedGraph
 			tmpRect.Height -= spaceT + spaceB;
 			tmpRect.Y += spaceT;
 
-			_legend.CalcRect( g, this, scaleFactor, ref tmpRect );
+			_legend.CalcRect( g, this, scaleFactor, ref tmpRect, ref clientRect );
+
+      if (_isAspectRatio)
+      {
+        CalcChartRectWithAspectRatio(
+          totSpaceL, totSpaceR, spaceT, spaceB, ref tmpRect, ref clientRect);
+      }
+
 
 			return tmpRect;
 		}
+
+    /// <summary>
+    /// Calculate a chart rect considering a certain aspect ratio.
+    /// <seealso cref="GraphPane.IsAspectRatio"/>
+    /// <seealso cref="GraphPane.AspectRatio"/>
+    /// </summary>
+    /// <param name="LS">The left space.</param>
+    /// <param name="RS">The Right space.</param>
+    /// <param name="TS">The top space.</param>
+    /// <param name="BS">The bottom space.</param>
+    /// <param name="gr">The graph pane rectangle.</param>
+    /// <param name="cr">The chart rectangle.</param>
+    private void CalcChartRectWithAspectRatio(float LS, float RS, float TS, float BS,  ref RectangleF cr, ref RectangleF gr)
+    {
+      float W_ = cr.Height * _aspectRatio;// aspect ratio corrected width of the chart rect
+      float H_ = cr.Width / _aspectRatio; // aspect ratio corrected height of the chart rect
+
+      float GW_ = (W_ + LS + RS);// graph pane width we would need
+      float GH_ = (H_ + TS + BS);// graph pane height we would need
+
+      // Does the aspect-ratio-corrected width and height fit?
+      if ((GW_ <= gr.Width) && (GH_ <= gr.Height))
+        // choose the dimension that makes a larger graph.
+        if (W_ > H_) cr.Width = W_; else cr.Height = H_;
+      else if (GW_ <= gr.Width)
+        cr.Width = W_; // the width fits
+      else if (GH_ <= gr.Height)
+        cr.Height = H_; // the height fits
+
+      // TODO: Consider the dimensions and the positioning of the curve legend.
+      float tx  = gr.Width - ( cr.Width + LS + RS );
+      float ty  = gr.Height - (cr.Height + TS + BS );
+      float txCenter = tx / 2;
+      float tyMiddle = ty / 2;
+
+      // ToDo: Consider the curve legend positioning
+      switch (_chartAlign)
+      {
+        case ContentAlignment.BottomCenter:
+          cr.X += txCenter;
+          cr.Y += ty;
+          break;
+        case ContentAlignment.BottomLeft:
+          cr.Y += ty;
+          break;
+        case ContentAlignment.BottomRight:
+          cr.X += tx;
+          cr.Y += ty;
+          break;
+        case ContentAlignment.MiddleCenter:
+          cr.X += txCenter;
+          cr.Y += tyMiddle;
+          break;
+        case ContentAlignment.MiddleLeft:
+          cr.Y += tyMiddle;
+          break;
+        case ContentAlignment.MiddleRight:
+          cr.X += tx;
+          cr.Y += tyMiddle;
+          break;
+        case ContentAlignment.TopCenter:
+          cr.X += txCenter;
+          break;
+        case ContentAlignment.TopRight:
+          cr.X += tx;
+          break;
+        case ContentAlignment.TopLeft:
+        default:
+          break;
+      }
+
+    }
 
 		private void SetSpace( Axis axis, float clientSize, ref float spaceNorm, ref float spaceAlt )
 		{

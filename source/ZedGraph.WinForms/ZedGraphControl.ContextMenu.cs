@@ -401,7 +401,7 @@ namespace ZedGraph
 					}
 				}
 
-				if ( SaveFileDialog.ShowDialog() == DialogResult.OK )
+				if (SaveFileDialog.FileName == DefaultFileName || SaveFileDialog.ShowDialog() == DialogResult.OK)
 				{
 					Stream myStream = SaveFileDialog.OpenFile();
 					if ( myStream != null )
